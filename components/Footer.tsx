@@ -1,7 +1,11 @@
 import Logo from './Logo';
 import { footer, site } from '@/lib/content';
+import { footerLegalLinks } from '@/lib/legal';
 
 export default function Footer() {
+  // Derived from the policy documents, so a new policy appears here on its own.
+  const legalLinks = footerLegalLinks();
+
   return (
     <footer className="bg-navy text-ivory/70">
       <div className="shell py-14 sm:py-16">
@@ -79,7 +83,7 @@ export default function Footer() {
         <div className="shell py-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <ul className="flex flex-wrap gap-x-6">
-              {footer.legalLinks.map((link) => (
+              {legalLinks.map((link) => (
                 <li key={link.label}>
                   <a
                     href={link.href}

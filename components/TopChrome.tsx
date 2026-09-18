@@ -24,7 +24,7 @@ export default function TopChrome() {
         <div className="shell">
           <div className="flex h-16 items-center justify-between gap-3">
             <a
-              href="#hero"
+              href="/#hero"
               className="flex min-h-11 shrink-0 items-center"
               aria-label={`${site.brandName} authorized retailer, back to top`}
             >

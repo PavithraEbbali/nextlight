@@ -6,6 +6,79 @@ reverted. Newest entries at the top.
 
 ---
 
+## [0.9.0] — Eight policy pages
+
+Per the project's AGENTS.md, the bundled Next docs were read before writing
+any routing code (`01-getting-started/03-layouts-and-pages.md`,
+`03-file-conventions/page.md`, `dynamic-routes.md`). Next 16 specifics that
+mattered: `params` is a Promise and must be awaited, and `PageProps<'/route'>`
+is a globally generated helper that is not imported.
+
+### Built as data, not eight routes
+Eight hand-built pages would have been eight places for the chrome, the
+contact block and the retailer disclosure to drift apart. Instead the text
+lives in `lib/legal.ts` and a single template at `app/legal/[slug]/page.tsx`
+renders whichever document the slug resolves to. `generateStaticParams`
+prerenders all eight; an unknown slug hits `notFound()`.
+
+The footer links and the in-page "Other policies" sidebar are both derived
+from `legalDocs`, so a ninth policy is one array entry and nothing else.
+
+`footerLegalLinks()` deliberately lives in `legal.ts`, not `content.ts`:
+`legal.ts` already imports `site` from `content.ts`, so putting it the other
+way round would have made the two modules circular.
+
+### Structure taken from the references
+bestfiberinternet.us carries the fuller legal set and was the better model:
+title, one-line standfirst, numbered topic sections, contact block at the end,
+same chrome as the marketing page. kineticfiber.us has only three legal links
+and was less use here.
+
+Content is original. The references informed **which topics each policy needs
+to cover**, not the wording.
+
+Two project constraints shaped the copy: nothing routes the reader to the
+network operator for support (every policy ends at the retailer's own line),
+and no policy carries a date stamp, per the standing "no date stamps" rule.
+That last one is flagged in the README — policies conventionally carry an
+effective date, and the field is a small addition if wanted.
+
+### Anchor links had to become root-absolute
+Section links were bare hashes (`#fiber`), which do nothing from
+`/legal/privacy`. They are now `/#fiber`.
+
+That alone would have broken smooth scrolling on the home page, because
+`SmoothScroll` only intercepted `a[href^="#"]`. It now resolves each link
+against the current URL and takes over **only when the origin and pathname
+match**, so a `/#fiber` click from a policy page stays a real navigation.
+
+Verified by dispatching synthetic clicks and checking `defaultPrevented`:
+`/#fiber` and `/#faq` intercepted from `/`; `/legal/privacy`,
+`/legal/tcpa#anything` and a cross-origin link all left alone.
+
+### Also
+- `© 2026` → `©` in the footer copyright, as asked.
+- `metadataBase` added, resolving from `NEXT_PUBLIC_SITE_URL`, then Vercel's
+  injected production domain, then localhost. The build had been warning that
+  social-card images were resolving against localhost.
+- `site.contactEmail` added as a clearly-marked placeholder.
+
+### Verified
+All eight slugs return 200 with the expected H1 and section count; an unknown
+slug returns 404. Build output shows `● (SSG)` for all eight. Footer carries
+eight legal links on every page. Audited `/legal/privacy` at 320px: **0
+issues**; home page re-audited at 320px: **0 issues**, still 6 images and no
+overflow. `tsc --noEmit` clean, `next build` clean with no warnings.
+
+### Note on testing in the app's browser pane
+`requestAnimationFrame` does not run while the app window is behind another —
+measured 0 frames in a full second, with `visibilityState` still reporting
+"visible". Lenis drives scrolling from a RAF loop, so anchor clicks set the
+hash but never animate. Native `scrollTo` still works. Test the interception
+logic (`defaultPrevented`) rather than the resulting scroll position.
+
+---
+
 ## [0.8.0] — Mobile pass, repository, Vercel readiness
 
 ### Audited rather than spot-checked

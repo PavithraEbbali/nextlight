@@ -35,10 +35,21 @@ export default function SmoothScroll() {
 
     const onAnchorClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
-      const anchor = target?.closest<HTMLAnchorElement>('a[href^="#"]');
+      const anchor = target?.closest<HTMLAnchorElement>('a[href*="#"]');
       if (!anchor) return;
 
-      const hash = anchor.getAttribute('href');
+      /*
+        Section links are written root-absolute (`/#fiber`) so they also work
+        from the policy pages under /legal. That means matching on the hash
+        alone is not enough - we only take over the click when the link points
+        at the page we are already on. A `/#fiber` click from /legal/privacy
+        has to stay a real navigation.
+      */
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname !== window.location.pathname) return;
+
+      const hash = url.hash;
       if (!hash || hash === '#') return;
 
       const destination = document.querySelector(hash);

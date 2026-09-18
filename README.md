@@ -61,6 +61,38 @@ right place.
 
 ---
 
+## Policy pages
+
+Eight policies live at `/legal/<slug>`:
+
+| Page | Slug |
+|---|---|
+| Privacy & Data Protection | `privacy` |
+| Disclaimer | `disclaimer` |
+| Cookies Policy | `cookies` |
+| TCPA Policy | `tcpa` |
+| Trademarks | `trademarks` |
+| Marketing Policy | `marketing` |
+| Service Fulfillment | `service-fulfillment` |
+| PCI DSS | `pci-dss` |
+
+They are **data, not eight routes**. The text lives in
+[`lib/legal.ts`](lib/legal.ts) and one template at
+`app/legal/[slug]/page.tsx` renders whichever document the slug resolves to.
+`generateStaticParams` prerenders all eight to static HTML.
+
+Adding a ninth policy means adding an entry to `legalDocs`. The route, the
+footer link and the "Other policies" sidebar all derive from that array, so
+they cannot fall out of step. An unknown slug returns a 404.
+
+> **Before launch:** the policies contain no effective or last-reviewed date,
+> because the brief asked for no date stamps anywhere on the site. Policies
+> conventionally carry one, and you may want to add an `effectiveDate` field
+> to `LegalDoc` and render it under the title. Also replace
+> `site.contactEmail` — it is currently `compliance@example.com`.
+
+---
+
 ## Photography
 
 Images live in `public/images/` and are declared once in
@@ -122,5 +154,13 @@ build-command overrides, no output-directory changes.
 | Install command | `npm install` (default) |
 | Environment variables | none |
 
-Before pointing a domain at it, replace the placeholder phone number and give
-the four footer legal links real destinations — they currently point at `#`.
+Optionally set `NEXT_PUBLIC_SITE_URL` to the production domain. Without it,
+`metadataBase` falls back to the domain Vercel injects, which is correct for
+the production deployment but not for a custom domain.
+
+Before pointing a domain at it:
+
+- Replace the placeholder phone number (`site.phoneDisplay` / `site.phoneTel`).
+- Replace `site.contactEmail`, which every policy page routes written
+  enquiries to.
+- Decide whether the policies should carry effective dates (see above).

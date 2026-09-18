@@ -22,7 +22,22 @@ const notoSans = Noto_Sans({
 
 const ogCard = resolve('openGraph');
 
+/**
+ * Base URL for resolving canonical links and social-card image paths.
+ *
+ * Prefers an explicit NEXT_PUBLIC_SITE_URL, falls back to the domain Vercel
+ * injects for the production deployment, and finally to localhost for local
+ * builds. Without this, Next warns and resolves social images against
+ * localhost, which breaks them once deployed.
+ */
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : 'http://localhost:3000');
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: `${site.brandName} Fiber Internet Plans | ${site.retailerName}`,
   description:
     'Order NextLight 100% fiber internet with symmetrical speeds from 100 Mbps to 8 Gig. No data caps, no annual contract, free professional installation. Independent authorized retailer.',

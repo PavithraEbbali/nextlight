@@ -104,6 +104,13 @@ export const site = {
 
   salesHours: 'Mon-Fri 8AM-9PM MT · Sat-Sun 9AM-6PM MT',
 
+  /**
+   * PLACEHOLDER contact address for the policy pages - replace with a real
+   * monitored mailbox before launch. Every legal page routes written enquiries
+   * here, so it must reach someone.
+   */
+  contactEmail: 'compliance@example.com',
+
   disclosureShort: 'Independent Authorized Retailer of NextLight.',
   disclosureLong:
     'This is an independent authorized retailer of NextLight services. Pricing, speeds and service features are set by the provider and are subject to change.',
@@ -673,9 +680,9 @@ export const faqs: { q: string; a: string }[] = [
 /* -------------------------------------------------------------------------- */
 
 export const navLinks = [
-  { label: 'Plans', href: '#fiber' },
-  { label: 'Why NextLight', href: '#why' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Plans', href: '/#fiber' },
+  { label: 'Why NextLight', href: '/#why' },
+  { label: 'FAQ', href: '/#faq' },
 ];
 
 export const footer = {
@@ -685,31 +692,30 @@ export const footer = {
     {
       heading: 'Shop',
       links: [
-        { label: 'Fiber internet plans', href: '#fiber' },
-        { label: 'Internet bundles', href: '#bundles' },
-        { label: 'Digital Voice home phone', href: '#phone' },
-        { label: 'Check availability', href: '#hero' },
+        { label: 'Fiber internet plans', href: '/#fiber' },
+        { label: 'Internet bundles', href: '/#bundles' },
+        { label: 'Digital Voice home phone', href: '/#phone' },
+        { label: 'Check availability', href: '/#hero' },
       ],
     },
     {
       heading: 'Learn',
       links: [
-        { label: 'All FAQs', href: '#faq' },
-        { label: 'Plan pricing and fees', href: '#fine-print' },
-        { label: 'Why NextLight fiber', href: '#why' },
-        { label: 'How ordering works', href: '#how-it-works' },
+        { label: 'All FAQs', href: '/#faq' },
+        { label: 'Plan pricing and fees', href: '/#fine-print' },
+        { label: 'Why NextLight fiber', href: '/#why' },
+        { label: 'How ordering works', href: '/#how-it-works' },
       ],
     },
   ],
   contactHeading: 'Talk to a human',
-  legalLinks: [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Use', href: '#' },
-    { label: 'Accessibility', href: '#' },
-    { label: 'Do Not Sell My Info', href: '#' },
-  ],
+  /*
+    Legal links are derived from `legalDocs` in lib/legal.ts rather than
+    listed here, so adding a policy adds its footer link automatically and the
+    two can never disagree. See `footerLegalLinks()` below.
+  */
   copyright:
-    '© 2026 NextLight Authorized Retailer - independent authorized retailer.',
+    '© NextLight Authorized Retailer - independent authorized retailer.',
   trademark:
     'NEXTLIGHT and related marks are trademarks of their respective owner. This site is operated by an independent authorized retailer.',
 } as const;
