@@ -1,26 +1,658 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   OFFICIAL NEXTLIGHT BRAND PALETTE
+   Hex values taken directly from the CSS custom properties published on
+   mynextlight.com. Do not substitute approximations.
+   ========================================================================== */
+
+@theme {
+  --color-navy-dark: #002c51;
+  --color-navy: #004a81;
+  --color-teal: #3eceba;
+  --color-sky: #4ccaef;
+  --color-sprout: #d6f38e;
+  --color-ivory: #fffff6;
+  --color-slate-ink: #3e4b56;
+  --color-mist: #d8dbdd;
+  --color-sand: #cbb398;
+  --color-sun: #f9f923;
+
+  /* Support tints derived from the brand navy for surfaces and borders. */
+  --color-navy-050: #f2f7fb;
+  --color-navy-100: #e2edf5;
+  --color-navy-700: #003a66;
+
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ==========================================================================
+   HOW THE PALETTE IS APPLIED
+   Roles read off the live site, not invented:
+     ivory   #FFFFF6  page background (the site is ivory, never pure white)
+     sprout  #D6F38E  primary CTA fill, with navy text on top
+     teal    #3ECEBA  top utility bar, accent rules, check marks
+     navy    #004A81  headings, body emphasis, footer background
+     navy-dk #002C51  hero canvas
+     white            card surfaces sitting on ivory
+   ========================================================================== */
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Disclosure bar + sticky header + mobile anchor rail. Anchor targets and
+     Lenis both read this so headings never land under the top chrome. */
+  /* Measured chrome height: 137px mobile (disclosure + header + anchor rail),
+     97px from md up where the anchor rail is hidden. */
+  --header-offset: 140px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (min-width: 768px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --header-offset: 100px;
   }
 }
 
+* {
+  min-width: 0;
+}
+
+html {
+  /* Lenis drives smooth scrolling; native smooth would fight it. */
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Guard against horizontal overflow down to 320px.
+     `clip`, never `hidden`: overflow-x:hidden turns body into a scroll
+     container, which silently breaks `position: sticky` on the top chrome.
+     `clip` trims the same overflow without creating that container. */
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-slate-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* NextLight sets every headline in uppercase Poppins. Uppercase needs the
+   tracking opened back up or the letterforms crowd. */
+.heading-brand {
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+}
+
+/* Anchor targets clear the fixed disclosure bar + sticky header. */
+[id] {
+  scroll-margin-top: var(--header-offset);
+}
+
+::selection {
+  background-color: var(--color-teal);
+  color: var(--color-navy-dark);
+}
+
+/* Visible, on-brand focus ring for keyboard users. */
+:where(a, button, input, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-sky);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   LENIS SMOOTH SCROLL
+   ========================================================================== */
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   ENTRANCE REVEAL - one shot, subtle, never replays
+   ========================================================================== */
+
+/* The hidden start state only applies where scripting is actually enabled, so
+   a no-JS visitor gets the finished layout rather than a blank page. The
+   failsafe animation is a second net: if the bundle never executes, every
+   reveal un-hides itself after 3s without any JavaScript. */
+@media (scripting: enabled) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.7s var(--ease-brand),
+      transform 0.7s var(--ease-brand);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+    animation: reveal-failsafe 0.01s linear 3s forwards;
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+    animation: none;
+  }
+}
+
+@keyframes reveal-failsafe {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   AMBIENT MOTION
+   Everything here animates `transform` and `opacity` only, so it stays on the
+   compositor and never triggers layout or paint. The colour fields are plain
+   divs carrying a radial-gradient that get moved around - animating the
+   gradient itself would repaint every frame and is far more expensive.
+   ========================================================================== */
+
+/* Slow drifting colour fields. Three different paths and durations, chosen so
+   they do not share a common period and the loop never looks like a loop. */
+@keyframes aurora-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(7%, -5%, 0) scale(1.15);
+  }
+  66% {
+    transform: translate3d(-5%, 6%, 0) scale(0.92);
+  }
+}
+
+@keyframes aurora-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  40% {
+    transform: translate3d(-8%, 6%, 0) scale(0.9);
+  }
+  70% {
+    transform: translate3d(5%, 4%, 0) scale(1.18);
+  }
+}
+
+@keyframes aurora-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  50% {
+    transform: translate3d(6%, 7%, 0) scale(1.2);
+  }
+}
+
+.aurora-a {
+  animation: aurora-a 19s ease-in-out infinite;
+}
+.aurora-b {
+  animation: aurora-b 23s ease-in-out infinite;
+}
+.aurora-c {
+  animation: aurora-c 27s ease-in-out infinite;
+}
+
+/* A soft band of light crossing the hero. Deliberately long and low contrast:
+   it should register as atmosphere, not as a moving object. */
+@keyframes beam-sweep {
+  0% {
+    transform: translateX(-65%) skewX(-12deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(165%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+.beam-sweep {
+  animation: beam-sweep 14s ease-in-out infinite;
+}
+
+/* Trust marks lift and settle on slightly different clocks. */
+@keyframes chip-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.chip-float {
+  animation: chip-float 7s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0ms);
+}
+
+/* The live dot on the eyebrow pill. */
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
+
+.dot-pulse {
+  animation: dot-pulse 2.4s ease-in-out infinite;
+}
+
+/* Hero entrance. Separate from `.reveal` because the hero is above the fold
+   and should not wait on an IntersectionObserver to fire. */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+  Note the absence of `opacity: 0` here. Setting the hidden state in the rule
+  means that if the animation never runs - unsupported, blocked, stripped by
+  an extension - the hero headline stays invisible forever. Instead the hidden
+  state lives only in the keyframe's `from`, and `animation-fill-mode: both`
+  applies it backwards through the delay. If the animation does not run at
+  all, the element simply keeps its default opacity of 1 and renders.
+
+  Not gated on `scripting: enabled` either, unlike `.reveal`: this is pure CSS
+  and has no JavaScript dependency to wait on.
+*/
+.hero-rise {
+  animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+/* Slow sheen across the accent words in the headline. */
+@keyframes text-sheen {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.text-sheen {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-sprout) 0%,
+    var(--color-sprout) 38%,
+    var(--color-teal) 50%,
+    var(--color-sprout) 62%,
+    var(--color-sprout) 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: text-sheen 9s ease-in-out infinite;
+
+  /* The fill here is a gradient clipped to the glyphs, so `color` is
+     transparent. An inherited `text-shadow` paints a dark blurred copy that
+     bleeds through the antialiased edges and turns the words muddy grey.
+     `drop-shadow` works off the rendered alpha instead, so it shadows the
+     gradient-filled glyphs cleanly. */
+  text-shadow: none;
+  filter: drop-shadow(0 2px 12px rgba(0, 28, 52, 0.6))
+    drop-shadow(0 1px 2px rgba(0, 28, 52, 0.5));
+}
+
+/* Text sitting over photography plus moving colour fields.
+   The scrim alone was measured and tuned, but the drifting aurora and the
+   beam both lift the canvas as they pass, and by varying amounts. Rather than
+   darken the scrim again - which is what was hiding the photograph in the
+   first place - the type carries its own shadow. Legibility then holds no
+   matter what the background is doing underneath. */
+.text-on-media {
+  text-shadow:
+    0 1px 2px rgba(0, 28, 52, 0.45),
+    0 2px 18px rgba(0, 28, 52, 0.4);
+}
+
+/* ==========================================================================
+   PREMIUM SURFACE + EMPHASIS LAYER
+   The pieces that give the page its depth: glass panels, gradient numerals,
+   glow, and slowly panning gradient borders.
+   ========================================================================== */
+
+/* Frosted panel for the dark canvases. A real border plus a highlight inset,
+   so it reads as a pane of glass rather than a flat translucent box.
+
+   The blur is NOT declared here. `backdrop-filter` written in this file is
+   silently stripped by the build - the emitted rule came back carrying only
+   background, border and box-shadow. Consumers apply Tailwind's own
+   `backdrop-blur-*` / `backdrop-saturate-*` utilities instead, which survive
+   it. Do not re-add it here expecting it to work. */
+.glass-dark {
+  /* Base is opaque enough to stay cool and neutral. At the 0.42 it started on
+     the panel took its colour from whatever sat behind it, which over a
+     photograph of asphalt read as muddy brown rather than glass. */
+  background:
+    linear-gradient(
+      158deg,
+      rgba(255, 255, 246, 0.1) 0%,
+      rgba(255, 255, 246, 0.035) 45%,
+      rgba(255, 255, 246, 0.015) 100%
+    ),
+    rgba(0, 31, 57, 0.72);
+  border: 1px solid rgba(255, 255, 246, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 246, 0.18),
+    0 22px 46px -28px rgba(0, 14, 30, 0.95);
+}
+
+/*
+  Shared sizing for the hero rail figures.
+
+  Sized for the slim ribbon: label and value share one line, so the value
+  has to sit comfortably beside small caps rather than dominate a cell.
+
+  `leading` must clear the descenders. At the `leading-[0.85]` this started on,
+  the tail of the "g" in "8 Gig" was sliced off by the line box — a tight
+  leading is fine for all-caps or digits but not for lowercase.
+
+  Size steps down from 3.5rem to a 2.5-3rem range as well. At the larger size a
+  word value like "Included" shouted louder than the price, which is the one
+  figure that should lead.
+*/
+.stat-figure {
+  font-size: 1.75rem;
+  line-height: 1.12;
+}
+
+@media (min-width: 640px) {
+  .stat-figure {
+    font-size: 2rem;
+  }
+}
+
+/*
+  Word values need less size than numerals to carry the same weight. "Included"
+  set at the numeral size simply fills its cell and ends up shouting over the
+  price, which is the figure that should lead the row.
+*/
+.stat-figure--word {
+  font-size: 1.45rem;
+}
+
+@media (min-width: 640px) {
+  .stat-figure--word {
+    font-size: 1.65rem;
+  }
+}
+
+/* The big numbers: teal-to-sky fill plus a bloom behind the glyphs. */
+.stat-gradient {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-teal) 0%,
+    var(--color-sky) 55%,
+    var(--color-teal) 100%
+  );
+  background-size: 180% 180%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* drop-shadow, not text-shadow: the fill is a gradient clipped to the
+     glyphs, so the text itself is transparent and a text-shadow would bleed
+     through the antialiased edges. */
+  filter: drop-shadow(0 0 22px rgba(62, 206, 186, 0.45));
+  animation: gradient-pan 11s ease-in-out infinite;
+}
+
+.stat-gradient-sprout {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-sprout) 0%,
+    #eafab8 50%,
+    var(--color-sprout) 100%
+  );
+  background-size: 180% 180%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 22px rgba(214, 243, 142, 0.4));
+  animation: gradient-pan 13s ease-in-out infinite;
+}
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Section headings on the light bands: navy deepening into the brand navy,
+   both dark enough that contrast on ivory is never in question. */
+.heading-gradient {
+  background-image: linear-gradient(
+    120deg,
+    var(--color-navy-dark) 0%,
+    var(--color-navy) 46%,
+    var(--color-navy-700) 100%
+  );
+  background-size: 160% 160%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-pan 14s ease-in-out infinite;
+}
+
+/*
+  Legibility scrim anchored to the copy column instead of the viewport.
+
+  A viewport-wide gradient cannot do this job: the copy sits in a centred
+  max-width shell, so the distance from the screen edge to the last word
+  changes with the window. Tuning the stops for one width either fails
+  contrast at another or, as happened here, goes so dark that the photograph
+  disappears entirely.
+
+  Pinning the gradient to the copy keeps the falloff in the same place
+  relative to the text at every width - the overshoot on the right is where it
+  fades out, so the photograph stays visible beyond the column.
+*/
+.copy-scrim {
+  position: relative;
+  isolation: isolate;
+}
+
+.copy-scrim::before {
+  content: '';
+  position: absolute;
+  top: -3rem;
+  bottom: -2rem;
+  left: -50vw;
+  right: -7rem;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 44, 81, 0.92) 0%,
+    rgba(0, 44, 81, 0.86) 64%,
+    rgba(0, 44, 81, 0.7) 84%,
+    rgba(0, 44, 81, 0) 100%
+  );
+}
+
+/* Bloom placed behind the hero headline so the type sits in its own light. */
+.headline-bloom::before {
+  content: '';
+  position: absolute;
+  inset: -12% -6% -18% -10%;
+  background: radial-gradient(
+    58% 62% at 22% 46%,
+    rgba(62, 206, 186, 0.26) 0%,
+    rgba(0, 74, 129, 0.16) 42%,
+    transparent 72%
+  );
+  filter: blur(26px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Slowly panning gradient rule, used as a card's top accent. */
+.accent-rule {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-teal),
+    var(--color-sky),
+    var(--color-sprout),
+    var(--color-teal)
+  );
+  background-size: 300% 100%;
+  animation: gradient-pan 9s linear infinite;
+}
+
+/* Glow that comes up on hover, for the featured plan card. */
+.glow-hover {
+  transition: box-shadow 0.4s var(--ease-brand);
+}
+.glow-hover:hover {
+  box-shadow:
+    0 0 0 1px rgba(62, 206, 186, 0.5),
+    0 22px 50px -26px rgba(0, 74, 129, 0.55),
+    0 0 42px -10px rgba(62, 206, 186, 0.38);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-gradient,
+  .stat-gradient-sprout,
+  .heading-gradient,
+  .accent-rule {
+    animation: none !important;
+  }
+}
+
+/* Fine dot lattice, used over the dark fields for a sense of depth. */
+.dot-grid {
+  background-image: radial-gradient(
+    rgba(214, 243, 142, 0.16) 1px,
+    transparent 1.4px
+  );
+  background-size: 26px 26px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-a,
+  .aurora-b,
+  .aurora-c,
+  .beam-sweep,
+  .chip-float,
+  .dot-pulse,
+  .text-sheen {
+    animation: none !important;
+  }
+
+  .hero-rise {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+
+  /* The sheen relies on its animated gradient for colour, so without it the
+     text needs a flat fill put back. */
+  .text-sheen {
+    background-image: none;
+    color: var(--color-sprout);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+
+.shell {
+  width: 100%;
+  max-width: 78rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .shell {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    padding-inline: 2rem;
+  }
+}
+
+/* Horizontal scroller used by the fine-print table on small screens. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }

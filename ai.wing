@@ -1,0 +1,906 @@
+# ai.wing — NextLight Authorized Retailer
+
+Structural changelog. Every significant architectural decision, feature
+addition and layout change is logged here so any change can be traced and
+reverted. Newest entries at the top.
+
+---
+
+## [0.7.1] — Ribbon sits lower in the hero
+
+Padding on the ribbon's container reweighted so the spare vertical space goes
+**above** it rather than below: `pb-9 pt-4 / sm:pb-12 sm:pt-6 / lg:pb-14 lg:pt-8`
+became `pb-5 pt-10 / sm:pb-6 sm:pt-14 / lg:pb-6 lg:pt-16`.
+
+The ribbon now sits near the bottom edge of the hero with just enough
+clearance not to look flush. Measured at 1265px: 96px above, **24px below**
+(was 56px). At 320px: 56px above, 20px below.
+
+### Measurement note
+A first reading reported only 6px of clearance. That was the ribbon's own
+`.reveal` still holding `translateY(18px)` — it sits below the fold at a 760px
+viewport, so its IntersectionObserver had not fired, and 24 − 18 = 6. Adding
+`is-visible` by hand did not help either, because the app window being hidden
+freezes the transition and `getComputedStyle` keeps returning the start value.
+
+The reliable way to measure a `.reveal` element's settled position in this
+environment is to null out `transition`, `transform` and `opacity` inline,
+read, then restore. Worth remembering for any future layout measurement on an
+element inside a Reveal.
+
+### Verified
+Settled geometry confirmed at both widths, no page overflow at 320px, zero
+offenders, 0 broken images. `tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.7.0] — Stat ribbon, per the reference sites
+
+Asked whether the three stats could be represented another way, with both
+reference sites named. Checked them rather than guessing:
+
+- **kineticfiber.us** runs a full-width rounded pill under its hero carrying a
+  single line of short claims — roughly 44px tall.
+- **bestfiberinternet.us** does the same: a one-line chip row at the base of
+  its hero.
+
+Neither uses a tall multi-line card. That was the thing making this element
+read as a slab regardless of how the surface was tuned — the problem was the
+**form**, not the finish. Four rounds were spent adjusting colour, spacing and
+type inside a shape that was wrong to begin with.
+
+### Rebuilt as a slim ribbon
+- One line per stat: label inline **before** the value on a shared baseline,
+  rather than label above, value below, note under that.
+- `items-baseline`, not `items-center` — small caps beside a large figure look
+  wrong centred; a shared baseline is what makes the row read as one line.
+- The three explanatory notes are gone. Each only restated something the
+  subline or the plan cards already said, and they were most of the height.
+  `speedNote` and `installNote` removed from `lib/content.ts` rather than left
+  as dead data; `priceLabel` added so all three labels sit together.
+- Figure scale down again to 1.75/2rem (words 1.45/1.65rem), with
+  `PriceLockup`'s `hero` size following, so the value sits comfortably beside
+  small caps instead of dominating.
+
+**Height: 172px → 77px**, a little over half. The photograph gains all of it.
+
+### Verified
+Ribbon 77px with cells at 76px each; label and value confirmed on one baseline
+in all three cells; 56px of photograph below it; hero down from 1005px to
+908px. 320px: cells stack, no overflow, figures fit, 0 broken images. No
+dangling references to the removed note fields. `tsc --noEmit` clean,
+`next build` static.
+
+---
+
+## [0.6.3] — Numbers bar spacing and figure balance
+
+Two things left over from 0.6.2.
+
+**The bar was crammed against the trust marks.** Nothing separated the end of
+the copy block from the top of the bar, so they read as one run. The bar now
+carries its own top padding and the copy block's bottom padding came down to
+match, rather than stacking two large gaps. Bottom padding also trimmed, so
+the band of asphalt below the bar does not run on.
+
+Measured at 1280px: 82px from the trust marks to the bar, 30px from the bar to
+the bottom of the hero. Both were near zero and near 100px respectively.
+
+**A word was set at numeral size.** "Included" at the same size as "8 Gig"
+simply filled its cell and shouted over the price, which is the figure that
+should lead the row. Added `.stat-figure--word`, a smaller step applied when
+the value does not begin with a digit — tested on the value itself rather than
+hard-coded to the install cell, so a future rail entry sizes itself correctly.
+
+Whole scale came down one notch at the same time (2.5/3rem → 2.25/2.75rem),
+with `PriceLockup`'s `hero` size following, so the rate and the speed figure
+stay on the same footing.
+
+Result at 1280px: price 44px, "8 Gig" 44px, "Included" 33px. Cells 160px each.
+
+### Verified
+Cells equal at 160px; figures fit without overflow at 320px (36px and 28px
+there); no page overflow, 0 broken images. `tsc --noEmit` clean, `next build`
+static.
+
+---
+
+## [0.6.2] — Numbers bar: one object, not a bolted-on band
+
+0.6.1 fixed the muddy panels by giving the rail its own opaque navy band. That
+solved the colour and created a worse problem: the band read as a **second
+section bolted to the bottom of the hero**, with three boxes floating in a
+slab of dead navy. The hero stopped being one object.
+
+Corrected by going the other way. The separate band is gone and the three
+panels are now **a single glass bar** sitting directly on the photograph:
+
+- One `<dl>` carrying `.glass-dark`, split into three cells by hairline
+  dividers rather than three separate boxes with gaps between them.
+- A single accent rule spanning the whole bar instead of one per panel.
+- Cells stack vertically below `sm`, with the dividers flipping from vertical
+  to horizontal.
+- The bottom navy fade added in 0.6.1 was removed, so the photograph now runs
+  to the bottom of the hero with the bar sitting on it.
+
+The muddiness that prompted the band in the first place is handled by the
+panel surface itself, which 0.6.1 already took to `rgba(0,31,57,0.72)` — dense
+enough to stay cool and even over any part of the photograph. The band was
+never the thing doing that work.
+
+### Verified
+Single container confirmed (one `<dl>`, one `.glass-dark`); separate navy band
+gone; 3 cells at 173px each; accent rule 1183px across an 1184px bar;
+`backdrop-filter: blur(24px) saturate(1.5)` active; 64px of photograph visible
+below the bar. 320px: bar 288px wide, cells stacked, both figures fit, no page
+overflow, 0 broken images. `tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.6.1] — Numbers rail refined
+
+The rail shipped in 0.6.0 looked bad in place. Five separate problems, all
+visible in one screenshot:
+
+**1. The panels were sitting on a car park.** The rail spans the bottom of the
+hero, and the bottom of that photograph is asphalt, kerb and parked cars. Glass
+takes its colour from whatever is behind it, so the panels came out muddy
+brown. No amount of tuning the panel itself fixes that — the surface behind it
+has to be controlled. The rail now carries its own opaque `bg-navy-dark` and
+its own `Aurora`, and the photograph fades into navy over the 14rem above it
+so the band does not begin on a hard seam.
+
+**2. The glass was too transparent to be glass.** Base went from
+`rgba(0,28,52,0.42)` to `rgba(0,31,57,0.72)`, the ivory sheen was pulled back,
+and the border and shadow were re-balanced. It now reads as a cool pane rather
+than a stain.
+
+**3. "8 Gig" had its descender sliced off.** `leading-[0.85]` is fine for
+all-caps and digits and wrong for anything with a tail. The figures moved to a
+shared `.stat-figure` class at `line-height: 1.12`, which clears them.
+
+**4. The figures shouted.** At 3.5rem the word "Included" carried more weight
+than the price, which is the one number that should lead. All three dropped to
+2.5rem / 3rem, and `PriceLockup`'s `hero` size was matched to them so the rate
+sits on the same scale rather than its own.
+
+**5. Panels were ragged.** Notes of different lengths left the panels unequal.
+Each is now `flex h-full flex-col` with `mt-auto` on the note, so the notes pin
+to the bottom and the panels line up. Measured after: 166px, 166px, 166px.
+
+Labels also moved from `ivory/70` to teal, which ties them to the section
+eyebrows elsewhere on the page.
+
+### Verified
+Rail background `rgb(0,44,81)` with its own colour field; panel surface
+`rgba(0,31,57,0.72)`; all three panels 166px; `8 Gig` and `Included` at 48px
+on a 54px line box (ratio 1.12, descenders clear); price integer 48px to
+match. 320px: panels 288px wide, both figures fit without overflow, no page
+overflow, 0 broken images. `tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.6.0] — Premium surface layer, emphasis, navbar retailer mark
+
+### Navbar
+"Authorized Retailer" now sits under the wordmark as part of the logo lockup.
+Hidden below `sm` so it cannot crowd a 320px header — the teal disclosure bar
+directly above already states the same thing at every width.
+
+### Emphasis: the numbers now carry weight
+The hero rail was three cells split by hairlines, which gave the rate, the top
+speed and the included install no more presence than body copy. Rebuilt as
+three **glass panels** — gradient surface, real border, highlight inset,
+backdrop blur, a panning accent rail along the top edge, and a lift on hover.
+
+The numerals inside them are gradient-filled with a bloom: `stat-gradient`
+(teal → sky) on the speed and install figures, `stat-gradient-sprout` on the
+rate, which `PriceLockup`'s dark tone now uses. Both use `drop-shadow` rather
+than `text-shadow`, for the same reason the headline sheen does — the fill is
+a gradient clipped to the glyphs, so the text itself is transparent.
+
+### Headline
+Wrapped in `.headline-bloom`, which paints a soft radial light behind the type
+through a `::before` at `z-index: -1`, so the headline sits in its own pool of
+light rather than flat on the photograph. A panning `accent-rule` closes the
+block, and the same rule now sits under every section heading.
+
+### Sections
+- Section titles take `heading-gradient` (navy-dark → navy → navy-700, all
+  dark enough that contrast on ivory is never in question).
+- Eyebrows became pills with a pulsing dot.
+- Plan cards: gradient surfaces, a panning accent rail along the top edge
+  (always on for the featured card, on hover for the rest), teal-bordered
+  speed readouts, badges moved to the top-right with a coloured glow, and a
+  `glow-hover` ring.
+
+### The hero scrim had to be re-architected
+Hardening contrast in 0.5.0 pushed the scrim to `via/72 to/28`, and that
+buried the photograph completely — exactly what had been asked to avoid.
+
+The root cause was structural, not a matter of tuning: **the scrim was
+anchored to the viewport while the copy is centred in a max-width shell**, so
+the distance from the screen edge to the last word changes with window size.
+Stops tuned for one width either fail contrast at another or go so dark the
+photo disappears. There was no value that worked everywhere.
+
+Fixed with `.copy-scrim`, a `::before` pinned to the copy column itself,
+extending `-50vw` to the left and `-7rem` past its right edge. The falloff now
+lands in the same place relative to the text at every width. The full-width
+layers could then drop right back — radial to `md:opacity-[0.14]`, flat tint
+to `/10`.
+
+The copy column also narrowed from `max-w-4xl` to `max-w-3xl`, which both
+reads more editorial and pulls the falloff left so more of the frame opens up.
+
+Result at 1265px: photograph clearly visible from ~63% of the frame, and
+
+| | Needs | Measured |
+|---|---|---|
+| H1 | 3.0 | 4.35 |
+| Subline | 4.5 | 6.41 |
+| ZIP helper | 4.5 | 7.43 |
+
+### Bug: the build silently strips `backdrop-filter`
+`.glass-dark` declared `backdrop-filter` and it never reached the browser —
+the emitted rule came back carrying only `background`, `border` and
+`box-shadow`, and `getComputedStyle` reported `none` despite the browser
+supporting it. The glass panels were rendering flat.
+
+Fixed by applying Tailwind's own `backdrop-blur-md backdrop-saturate-150`
+utilities on the element, which survive the build. Confirmed afterwards:
+`blur(12px) saturate(1.5)`. A note sits in `globals.css` so it does not get
+re-added to the custom rule and silently fail again.
+
+### Note on verifying in the app's browser pane
+The pane scales an emulated viewport down to fit, which lowers the effective
+DPR, so `next/image` picks a much smaller variant — a 528x288 file was being
+stretched into a 1425x1029 box, which reads as a blurred gradient rather than
+a photograph. Real displays request the full 1408 source. Worth knowing before
+concluding an image "is not showing".
+
+### Verified
+3 glass panels, 3 gradient numerals, 19 accent rules, 6 gradient headings,
+8 glow-hover cards, retailer mark present. 320px: no overflow, zero offenders,
+0 broken images. `tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.5.0] — Ambient motion system
+
+Requested: a more animated, premium hero, and animated colour gradients behind
+the other sections. This reverses the 0.1.0 "keep animations minimal" line, so
+the later instruction was taken as current. The hard negatives still hold —
+everything below is CSS keyframes, no WebGL, no 3D, no animated diagrams.
+`bestfiberinternet.us` was read first; it runs the same approach (`spcAurora`
+16s, `spcBeam` 12s, `spcFloat` 7-9.5s staggered, one-shot `spcRise` with
+d1/d2/d3), all CSS.
+
+### What was added
+| Animation | Where | Detail |
+|---|---|---|
+| `aurora-a/b/c` | 8 sections | Three brand blobs, 19s/23s/27s — no shared period, so the loop never reads as a loop |
+| `beam-sweep` | Hero | Light band crossing, 14s |
+| `hero-rise` | Hero | One-shot entrance, 0.9s, staggered 0/110/220/330/430ms |
+| `text-sheen` | Hero accent | Sprout-to-teal sweep via `background-clip: text`, 9s |
+| `chip-float` | Trust marks | 7s, offset 900ms apart |
+| `dot-pulse` | Eyebrow dot | 2.4s |
+
+New `components/Aurora.tsx` renders the colour field with `dark`/`light` tones
+and an optional dot lattice. Everything animates `transform` or `opacity` only,
+so it composites without layout or paint, and the whole set stops under
+`prefers-reduced-motion`.
+
+### Contrast had to be re-derived, and it failed first
+The moving fields lift the hero canvas, which invalidated the scrim measured
+in 0.4.0. Re-measured with the aurora modelled at its maximum uniform alpha.
+
+A first pass measured each text block's **bounding box**, which was wrong —
+short final lines ("CAPS.") leave empty space that gets sampled as if it held
+type, so everything looked like a failure. Re-measured against real glyph
+rectangles via `Range.getClientRects()`:
+
+| | Needs | Box (wrong) | Glyph rects | After fix |
+|---|---|---|---|---|
+| H1 | 3.0 | 2.71 | 3.49 ✓ | 4.94 |
+| Subline | 4.5 | 4.09 | **3.84 ✗** | 5.08 |
+| ZIP helper | 4.5 | 3.29 | **4.41 ✗** | 7.11 |
+
+Two real failures. Fixed by:
+- Hero scrim `via-navy-dark/60 to-transparent` → `via-navy-dark/72
+  to-navy-dark/28`. The copy column reaches ~70% of the viewport at mid widths
+  (~1000px), where the old gradient had already thinned to nothing. A floor on
+  the right holds contrast and still leaves the photograph plainly visible.
+- ZIP helper `text-ivory/65` → `/85`.
+- `.text-on-media` text-shadow on hero copy, so legibility does not depend on
+  where the drifting field happens to be.
+
+Light sections were checked against the impossible worst case — all three
+blobs stacked at full strength — and still pass: body copy 4.95, headings 7.30.
+
+### Two bugs found while verifying
+**1. The sheen rendered muddy grey.** `.text-on-media` sets `text-shadow`, but
+the sheen fills glyphs with a gradient and sets `color: transparent`. The
+shadow paints a dark blurred copy that bleeds through the antialiased edges.
+Swapped to `filter: drop-shadow()`, which works off rendered alpha.
+
+**2. `.hero-rise` could hide the headline permanently.** It set `opacity: 0`
+in the rule and animated to 1. If the animation never runs — unsupported,
+blocked, stripped — the hero headline is invisible for good. This is the same
+failure `.reveal` was hardened against in 0.1.0 and I reintroduced it.
+
+Fixed by moving the hidden state out of the rule and into the keyframe's
+`from`, with `animation-fill-mode: both` applying it backwards through the
+delay. With no animation the element keeps its default opacity of 1. Verified
+by setting `animation: none` on the live H1 and confirming opacity resolves
+to 1.
+
+(Separately: measurements taken while the app window is hidden report
+`opacity: 0` because the browser freezes `document.timeline` — `currentTime`
+and `documentTimelineTime` both sit at 0. That is a test artifact, not a site
+bug; the animation runs when the tab is visible.)
+
+### Perf
+Blob blur cut from `blur-3xl` (64px) to `blur-xl` (24px). Eight fields means
+24 blurred layers to rasterise, and the radial gradients already fall off to
+transparent on their own — most of that radius was doing no visual work. A
+small radius is kept to avoid banding on the flat ivory sections.
+
+### Verified
+70 animated elements resolve across the page. 320px: no overflow, zero
+offenders, 0 broken images. `tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.4.1] — Digital Voice backdrop live
+
+All six images now supplied. The site has no empty image slots left.
+
+### Asset
+`home-phone-background.png` arrived as PNG at 2.9 MB, same as the OG card did.
+Converted to `home-phone-background.jpg` at q80 progressive:
+**2.88 MB → 85 KB**. Original kept in the scratchpad. Dimensions were correct
+at 1408x768. Total `public/images/` is now 720 KB for six photographs.
+
+### Scrim lowered from 0.80 to 0.70, via the eyebrow colour
+At the 0.80 scrim specified in 0.4.0 the kitchen was barely visible. Measured
+rather than guessed, sweeping scrim values against each text element:
+
+| Scrim | H2 (need 3.0) | Eyebrow **teal** (4.5) | Eyebrow **sprout** (4.5) | Desc @90% (4.5) |
+|---|---|---|---|---|
+| 0.65 | 5.05 | 3.28 ✗ | 5.21 | 4.23 ✗ |
+| **0.70** | **5.85** | 3.71 ✗ | **5.90** | **4.88** |
+| 0.75 | 6.82 | 4.16 ✗ | 6.61 | 5.70 |
+| 0.80 | 7.96 | 4.71 | 7.48 | 6.60 |
+
+The teal eyebrow was the binding constraint — it only clears 4.5:1 at 0.80,
+which is what was burying the photograph. Swapping the dark-tone eyebrow to
+**sprout** (much lighter on navy) moves the constraint out of the way, and the
+scrim drops to 0.70 with every element clearing AA with margin. The dark tone
+now reads: sprout eyebrow, teal rule, ivory title, description at `/90`.
+
+So the fix for "the photo is too dark" was a type colour, not the scrim alone.
+
+### Same md+ gate as the hero
+At 320px the phone section is a 320x1123 box against a 16:9 source —
+`object-cover` upscales 1.46x and keeps only **16%** of the frame, the same
+failure the hero had. The backdrop now renders from `md` up; below that the
+section's own `bg-navy-dark` carries it, which still reads as a deliberate
+dark band rather than a missing image.
+
+### Verified
+- Phone section: navy background, backdrop loads, sprout eyebrow
+  (`rgb(214,243,142)`), ivory heading.
+- Contrast on the backdrop — H2 5.85 (needs 3.0), eyebrow 5.90 (needs 4.5),
+  description 4.88 (needs 4.5).
+- 320px: photo wrapper computes to `display: none`, section stays
+  `rgb(0,44,81)`, no overflow, zero offenders, 0 broken images.
+- `tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.4.0] — Redundancy audit, lighter hero scrim, phone backdrop slot
+
+### Audit: the page made the same argument three times
+Requested check of whether the three photo bands were earning their place
+against the existing Why NextLight and How It Works sections. They were not:
+
+| Feature band | Already said by |
+|---|---|
+| Installation | whyUs "Free professional installation" **and** howItWorks "Get installed" |
+| At Home | whyUs "No caps, no throttling" + whyUs "Room to grow" |
+| Working From Home | whyUs "Uploads match downloads" |
+
+Some bullets were near-verbatim duplicates — "Move up a tier at any time
+without changing networks" in the band against "move up a tier without
+changing networks" in the whyUs body.
+
+**Resolution — merge rather than delete.** The bands carry the photography and
+say more per point, so they were kept and the six-card grid in `#why` was
+removed. `FeatureBands` no longer renders its own `<section>`; it renders
+inside `#why` under the whyUs heading. `whyUs.points` is gone from
+`lib/content.ts`, leaving only the eyebrow, title and description that head
+the section. The `#why` anchor and its nav link are unaffected.
+
+Band 1 was still duplicating How It Works, so it was repurposed from
+installation to **the network itself** — community ownership, fiber end to
+end, local crews. It keeps the technician photograph, which suits that story.
+How It Works now owns the installation narrative alone.
+
+Net effect: each argument appears once. The page lost a section and roughly
+half a screen of restated copy.
+
+### Hero scrim lightened, and a contrast regression caught
+The photograph was barely readable under the 0.3.1 scrim. Loosened to
+`md:opacity-25` on the radial and `from-navy-dark via-navy-dark/60
+to-transparent` on the linear (was `/80` to `/25`), plus the md–lg floor
+dropped from `/40` to `/25`.
+
+That is a real accessibility risk, so contrast was measured rather than eyed:
+the hero photo was drawn to a canvas, sampled along each text block, and the
+scrim layers composited in software to get the true background behind the
+type — then each element's own text opacity applied on top.
+
+Result at 1425px: H1 fine, but the **subline measured 4.21:1, under the 4.5:1
+AA needs for body text**, at the right-hand end where the gradient thins.
+Fixed by raising it from `text-ivory/75` to `text-ivory/90`.
+
+| Element | Needs | Before | After |
+|---|---|---|---|
+| H1 (large text) | 3.0 | 4.18 | 3.72 ✓ |
+| Subline (body) | 4.5 | **4.21 ✗** | 6.83 ✓ |
+| ZIP helper (body) | 4.5 | 5.38 | 5.38 ✓ |
+
+### Digital Voice backdrop slot
+The phone section holds one card on a wide band and read thin beside the
+multi-card sections. `ServiceSections` now renders a full-bleed photographic
+backdrop for the `phone` line when `phoneBackground` resolves, under an 80%
+navy scrim — heavier than the hero's because content spans the full width
+here rather than hugging the left.
+
+`SectionHeading` gained a `tone` prop for this: `dark` switches the eyebrow to
+teal, the rule to sprout and the title to ivory. The section falls back to the
+plain ivory band while the file is absent, so nothing is broken in the
+meantime.
+
+Prompt and filename (`home-phone-background.jpg`, 1408x768) added to
+`public/images/README.md`.
+
+### Verified
+- `#feature-bands` no longer exists as a section; 3 bands render inside
+  `#why`; the old card grid returns 0 items.
+- Section order unchanged: hero, fiber, bundles, phone, fine-print,
+  how-it-works, why, faq.
+- 4 images on the page, 0 broken. Phone section still plain ivory pending its
+  photo.
+- `tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.3.1] — Photography delivered and wired in
+
+All five images supplied. Every slot from 0.3.0 is now filled; no component
+needed changing to accept them, which was the point of building the manifest
+first.
+
+### Assets were reprocessed before use
+Delivered at ~8 MB each (~35 MB total) against a ~400 KB brief, and the social
+card arrived as `og-image.png` rather than `.jpg`. Originals are preserved in
+the session scratchpad under `images-original/`.
+
+- Re-encoded with sharp at JPEG q80, progressive, mozjpeg.
+  **35 MB → 632 KB total**, no visible quality loss — the sources were
+  enormously over-encoded, not high-detail.
+- `og-image.png` converted to `og-image.jpg`, cover-cropped to 1200x630, the
+  1.91:1 ratio social platforms expect. The `.png` was removed.
+
+### Manifest dimensions corrected
+Every image came back **1408x768**, not the per-slot sizes specified — the
+generator uses a fixed 16:9 output. `lib/images.ts` was updated to the real
+dimensions. This matters: `next/image` reserves layout space from these
+numbers, and wrong values cause layout shift and distortion.
+
+### Hero backdrop made responsive — the one real problem
+A 16:9 photograph cannot fill the hero on a narrow screen. Measured crop, via
+`scale = max(boxW/imgW, boxH/imgH)`:
+
+| Viewport | Hero box | Upscale | Photo width still visible |
+|---|---|---|---|
+| 320px | 320x1324 | 1.72x | **13%** |
+| 753px | 753x854 | 1.11x | 48% |
+| 1009px | 1009x920 | 1.20x | 60% |
+| 1265px | 1265x899 | 1.17x | 77% |
+
+At 320px the photo is blown up 1.7x showing a thin vertical slice — it reads
+as broken. So the backdrop now renders from `md` upward only; below that the
+gradient canvas carries the hero exactly as it did before any photo existed.
+`sizes="(max-width: 767px) 640px, 100vw"` stops narrow viewports fetching a
+large variant they will not display. `object-position: 65% 50%` biases the
+crop toward the houses, which sit right of centre in the frame.
+
+The three band photos are unaffected — they sit in a half-width column whose
+box tracks the image's own aspect, so there is no crop problem there.
+
+### Scrim retuned
+The 0.3.0 scrim (radial at 0.88 plus a heavy linear) buried the photograph
+almost completely. Now: radial drops to `md:opacity-50` as a brand tint, a
+left-weighted linear (`from-navy-dark via-navy-dark/80 to-navy-dark/25`) holds
+contrast under the headline, and an extra `bg-navy-dark/40` applies between md
+and lg where the copy still spans most of the width.
+
+### Verified
+- 4 images on the page, **0 broken**, `og:image` tag now present.
+- 320px: hero photo wrapper computes to `display: none`, all 3 band photos
+  present, `scrollWidth === clientWidth === 320`, zero offenders.
+- Desktop: hero photo `display: block`, 1024x558 variant served, 60% of frame
+  visible, `object-position: 65% 50%`.
+- Feature bands balance well — image box 564x308 against text boxes of
+  316/342/316, and image-left / image-right alternation confirmed.
+- `tsc --noEmit` clean, `next build` static.
+
+### Note for larger displays
+1408px is modest for a full-bleed hero backdrop; above ~1400px wide it
+upscales. It sits under a 50% scrim at low contrast so softness does not read,
+but a 2400px-wide source would be better if the hero is ever re-shot.
+
+---
+
+## [0.3.0] — Photography slots wired ahead of the assets
+
+### Copy
+- Fiber section: "Residential fiber plans with transparent pricing" →
+  **"Residential fiber plans and monthly rates"** ("transparent" dropped).
+- Why NextLight: "Community-owned fiber, engineered for consistent
+  performance" → **"Fiber to the home, owned by the community"**
+  ("engineered" and "consistent" dropped).
+
+### `lib/images.ts` — the image manifest
+Photography was commissioned but not yet delivered, so the slots were built
+first and made inert rather than left as a later retrofit.
+
+Every photograph is declared once in `images`, with its exact required
+filename and intrinsic dimensions. `resolve(key)` checks `public/<src>` with
+`fs.existsSync` and returns `null` when the file is absent. Because every
+consumer is a server component, this runs **at build time only** — no runtime
+cost, nothing in the client bundle.
+
+The effect: a missing photo is never a broken image or a 404. The consuming
+component simply renders its image-free layout, and the slot fills itself on
+the next build once the file is dropped in. Photos can land one at a time.
+
+Server-only module — must not be imported from a `'use client'` component.
+
+### Slots
+| Key | File | Size | Where |
+|---|---|---|---|
+| `heroBackground` | `hero-background.jpg` | 2400×1400 | Behind the hero, under the navy scrim |
+| `installation` | `fiber-installation.jpg` | 1600×1200 | Feature band 1 |
+| `household` | `family-streaming.jpg` | 1600×1200 | Feature band 2 |
+| `workFromHome` | `work-from-home.jpg` | 1600×1200 | Feature band 3 |
+| `openGraph` | `og-image.jpg` | 1200×630 | `og:image` metadata |
+
+### `components/FeatureBands.tsx` — new section
+Alternating photograph/copy blocks, the pattern the brand uses on its own
+pages. Filters to bands whose photo exists and **returns `null` when none do**,
+so the section is absent rather than empty. Band order alternates image-left /
+image-right automatically off the index. Copy lives in `featureBands` in
+`lib/content.ts`, keeping the single-source-of-truth rule intact.
+
+Placed between the fine-print grid and How It Works — it gives the page a
+visual break after the dense comparison table without disturbing the canonical
+service-line order.
+
+### Hero backdrop
+`BrandCanvas` now renders a `next/image` fill layer when `heroBackground`
+resolves, with `priority` set since it is the LCP element. Two scrims stack on
+top: the existing navy radial (dropped to 0.88 opacity when a photo is behind
+it) plus a left-weighted linear gradient, so the ivory headline keeps contrast
+against whatever the photograph is doing. With no photo the radial is simply
+the background, exactly as before.
+
+### `og:image`
+Added conditionally. A tag pointing at a missing file is worse than no tag, so
+the key is omitted from the `openGraph` object entirely until the file exists.
+
+### Brief
+`public/images/README.md` carries the filenames, dimensions and the generation
+prompts, including the realism constraints and a shared negative list. The
+hero prompt specifies a composition with the left half kept visually quiet,
+because the headline sits there.
+
+### Verified
+`featureBandsRendered: false`, `document.images.length: 0`, zero broken
+images, no `og:image` tag — all correct for the pre-delivery state.
+`tsc --noEmit` clean, `next build` static.
+
+---
+
+## [0.2.1] — Copy pass, hero spacing, sticky-header bug fix
+
+### Sticky header was never sticky (regression from 0.1.0, now fixed)
+`html, body { overflow-x: hidden }` — added in 0.1.0 as the 320px overflow
+guard — turns `body` into a scroll container, and that silently disables
+`position: sticky` for every descendant. The top chrome had been scrolling
+away with the page since the first build. Measured before the fix:
+`chromeTop: -255` at `scrollY: 255`.
+
+Fixed by switching the guard to `overflow-x: clip`, which trims the same
+overflow without establishing a scroll container. After: `chromeTop: 0` at
+`scrollY: 1199` on desktop and `scrollY: 1049` at 320px, with `scrollWidth`
+still equal to `clientWidth` at both widths.
+
+**Rule for this file: never use `overflow-x: hidden` on `html` or `body`
+here — it will break the top chrome again. Use `clip`.**
+
+`--header-offset` was also 130px against a measured mobile chrome of 137px,
+so anchored headings landed 7px under the bar. Raised to 140px; the md+ value
+of 100px matches its measured 97px.
+
+### Copy professionalised
+All rewrites landed in `lib/content.ts` only — no component touched.
+
+| Where | Now reads |
+|---|---|
+| Hero H1 | "Symmetrical 100% fiber internet with **no data caps.**" |
+| Hero subline | Rewritten to match; "fiber to the premises", "annual term agreement" |
+| ZIP button | "Check availability" (was "Check") |
+| ZIP label | "Confirm service at your address" — reworded to avoid repeating the button |
+| Fiber section | "Residential fiber plans with transparent pricing" |
+| Bundles | "Internet, managed WiFi and voice bundles" |
+| Fine print | "Monthly rates, equipment and included services" |
+| Why NextLight | "Community-owned fiber, engineered for consistent performance" |
+
+The hero subline was not on the request list but sits directly under the H1,
+so it was rewritten too rather than left tonally mismatched.
+
+The Why NextLight description previously ended "...not fiber to a cabinet down
+the street." That clause was dropped rather than reworded: it reads as a
+comparison against other operators, which the brief prohibits. The paragraph
+now describes only NextLight's own build.
+
+### Hero spacing
+Top padding reduced from `pt-14 sm:pt-20 lg:pt-24` to
+`pt-8 sm:pt-11 lg:pt-14`, closing the gap to the navbar. Bottom padding
+unchanged so the numbers rail keeps its breathing room.
+
+### Verified
+- Header sticks at both 320px and desktop.
+- 320px: `scrollWidth === clientWidth === 320`, zero offenders (the hero's
+  decorative sweep is excluded — it is clipped by the hero's own
+  `overflow-hidden`).
+- "Check availability" fits: 272px stacked at 320px, 200px beside a 352px
+  input at 640px. No overflow at either.
+- ZIP checker still resolves — 80503 returns the serviceable message.
+- `next build` static, `tsc --noEmit` clean.
+
+---
+
+## [0.2.0] — Palette roles corrected, hero rebuilt
+
+### Why
+Screenshots of the live mynextlight.com were supplied. The hex values in 0.1.0
+were already correct, but their **roles** were wrong. Corrected against the
+live site:
+
+| Element | 0.1.0 (wrong) | 0.2.0 (matches brand) |
+|---|---|---|
+| Page background | `#FFFFFF` white | **`#FFFFF6` ivory** — the site is never pure white |
+| Primary button | navy fill, ivory text | **sprout `#D6F38E` fill, navy-dark text** (their "Get Connected") |
+| Button shape | `rounded-lg` | **`rounded-full` pill** |
+| Top utility bar | navy-dark | **teal `#3ECEBA`** |
+| Headings | mixed case, navy-dark | **UPPERCASE, navy `#004A81`** |
+| Footer | navy-dark, uniform | **navy `#004A81` + sprout legal bar** with navy text |
+| Alternating sections | white / navy-050 | **ivory / white** |
+| Section accents | navy-050 tints | **teal tints, sprout pills** |
+
+`navy-050/100/700` survive only as incidental tints. `--color-sand` (`#CBB398`)
+and `--color-sun` (`#F9F923`, the sprout hover state) were added to complete
+the palette. A `.heading-brand` utility carries the uppercase treatment so the
+casing is one declaration rather than a class repeated across components.
+
+### Hero rebuilt
+The boxed white order card read as a template, so it is gone. The hero is now
+three bands on the navy canvas:
+1. **Headline band** — eyebrow pill, oversized uppercase H1 with the closing
+   phrase in sprout green, subline, then the ZIP checker inline (a single
+   ivory pill with a sprout Check button, stacking below 640px), then trust
+   marks as a plain check row rather than chips-in-boxes.
+2. **Numbers rail** — a three-cell `<dl>` divided by hairlines: the price
+   lockup in sprout, top speed and installation in teal. This is where the
+   price anchor now lives.
+3. **Brand canvas** — a navy radial wash plus one static two-stroke sweep in
+   sprout and teal, echoing the flowing line in NextLight's own material.
+   Fixed, `aria-hidden`, no motion, no 3D.
+
+`hero.headline` was split into `headline` + `headlineAccent` and a `statRail`
+block was added, so the accent phrase and every rail label stay in
+`lib/content.ts` rather than being hard-coded in the layout.
+
+### Call button removed from the hero
+Requested directly. This reverses the 0.1.0 brief, which had required a hero
+call button — noting it here because the two instructions conflict and the
+later one was taken as current. The call path is unaffected: the sticky header
+call button is on screen for the whole session, and every plan card still ends
+in a "Call to order" CTA. Hero `tel:` anchors: 0. Page total dropped 12 → 11.
+
+### Verified after the change
+- Computed styles sampled across 18 elements — every one returns an exact
+  brand hex (`#FFFFF6`, `#D6F38E`, `#3ECEBA`, `#004A81`, `#002C51`).
+- 320px: `scrollWidth === clientWidth === 320`, no page overflow. Three
+  elements report wider than the viewport: the decorative hero sweep and its
+  two paths, which are intentionally oversized and clipped by the hero's
+  `overflow-hidden`.
+- CTA labels, `data-call-cta` coverage (11/11), section order and the
+  banned-phrase sweep all still pass. `next build` static.
+
+---
+
+## [0.1.0] — Initial build
+
+### Stack
+- Next.js 16.3.5 (App Router, Turbopack), React 19.2, TypeScript 5.
+- Tailwind CSS v4 (CSS-first `@theme`, no `tailwind.config.js`).
+- `lenis` for smooth scrolling. No other runtime dependencies.
+- Strict frontend build: no API routes, no database, no server actions.
+  The ZIP checker resolves entirely in the browser against a static list.
+
+### Architecture decisions
+
+**1. `lib/content.ts` is the single source of truth.**
+Every price, speed, fee, feature bullet, disclosure string, nav label, FAQ
+entry and phone number lives in this one file. No TSX file contains a literal
+price, speed or phone number. Changing a rate there cascades automatically to:
+- the hero price anchor (`leadPlan()` picks the lowest-priced fiber tier),
+- every plan card,
+- the fine-print comparison table (rows generated from the same `plans` array),
+- the hero speed stat (`topSpeedPlan()`),
+- the CTA label on each card (`ctaLabel()` returns "Call to order" when a price
+  exists, "Call for pricing" when it does not).
+
+**1a. A single rate card feeds every dollar figure.**
+Refined after the first cascade test found a weakness: bundle qualifier
+sentences originally repeated `$39.95` / `$12.95` as literal prose, so editing
+a plan price left the explanation stale. All dollar amounts now originate in
+one `rates` object and are formatted through `splitRate()`, `money()` and
+`monthly()`. Everything downstream is derived:
+- fiber plan prices spread from `splitRate(rates.*)`,
+- bundle totals are computed sums (`fiberComplete1Gig + wifiSingleFamily`),
+- bundle qualifier sentences are template literals over the same rates, so the
+  price and the sentence explaining it can never disagree,
+- `finePrint.addOns` costs and the two FAQ answers that quote a fee read the
+  rate card as well.
+
+Verified end to end: changing `rates.wifiSingleFamily` from 12.95 to 19.99
+updated both WiFi bundle card prices ($52.90 → $59.94, $82.90 → $89.94), both
+bundle qualifier sentences, both fine-print table rows, the add-on cost tile
+and the router FAQ answer — with no TSX file touched. Reverted after the test.
+
+**2. Service line order is data-driven, not hard-coded.**
+`serviceSectionOrder` fixes the canonical merchandising sequence
+`fiber → cable → bundle → tv → mobile → phone`. `activeServiceSections()`
+filters that list to lines that actually have plans. `ServiceSections.tsx`
+maps the result, so a line with zero plans is omitted completely — no empty
+section, no placeholder card. Adding plans for a new line to `lib/content.ts`
+makes its section appear in the correct position with no layout edits.
+
+**3. `<PriceLockup plan={plan} />` is the only price renderer.**
+One component, consumed by the hero and every card. Renders a flex row:
+dollar sign, dominant integer (2.5rem `card` / 3.5rem `hero`), muted cents,
+`/mo` term. Reads `price`, `cents` and `promoQualifier` off the PlanItem.
+Falls back to the "Call for pricing" label when `price` is undefined. Has a
+`dark` tone variant for use on navy surfaces. `aria-label` carries the full
+spoken price since the numerals are split across spans.
+
+**4. `<CallButton />` is the only outbound call link.**
+Guarantees the number always comes from `site.phoneTel` and that every anchor
+carries `data-call-cta` for call tracking. The footer's large number link is
+the one hand-written `tel:` anchor and also carries the attribute.
+
+### Brand system
+Palette taken verbatim from the CSS custom properties published on
+mynextlight.com — not approximated:
+
+| Token | Hex | Use |
+|---|---|---|
+| `--color-navy-dark` | `#002C51` | hero background, footer, disclosure bar |
+| `--color-navy` | `#004A81` | primary buttons, headings, price integers |
+| `--color-teal` | `#3ECEBA` | accents, ZIP submit, check marks |
+| `--color-sky` | `#4CCAEF` | hover states, focus ring |
+| `--color-sprout` | `#D6F38E` | "New" plan badge |
+| `--color-ivory` | `#FFFFF6` | type on dark surfaces |
+| `--color-slate-ink` | `#3E4B56` | body copy |
+| `--color-mist` | `#D8DBDD` | borders, dividers |
+
+`--color-navy-050/100/700` are derived tints for surfaces and alternating
+section backgrounds. Typography matches the official site: Poppins (display)
+and Noto Sans (body), loaded via `next/font/google`.
+
+### Animation budget
+Deliberately minimal — no WebGL, no 3D backgrounds, no animated diagrams.
+- Lenis smooth scroll (`duration: 1.05`), with anchor clicks intercepted so
+  in-page navigation uses the same easing and offsets by `--header-offset`.
+- `<Reveal />`: one-shot entrance fade + 18px rise. The IntersectionObserver
+  unobserves on first intersection, so nothing replays on scroll-back.
+- Card hover: 1px lift plus shadow/border transition. Nothing else.
+- Everything is disabled under `prefers-reduced-motion: reduce`; Lenis is not
+  instantiated at all in that case.
+
+**Reveal failure modes, and how they are handled.** An entrance reveal that
+starts at `opacity: 0` will hide the page outright if its JavaScript never
+runs. Two guards, both pure CSS — an earlier inline-script approach was
+dropped because mutating `<html>`'s class list before hydration produced a
+React hydration mismatch:
+1. The hidden start state lives inside `@media (scripting: enabled)`, so a
+   no-JS visitor is served the finished layout.
+2. A `reveal-failsafe` keyframe un-hides every element after 3s, covering the
+   case where scripting is on but the bundle fails to load. `.is-visible`
+   sets `animation: none`, so the normal path is untouched.
+
+### Content sourcing
+Plans, rates and terms audited against the official NextLight site:
+- Fiber: Essential 100 Mbps $39.95 · Complete 1 Gig $69.95 (popular) ·
+  Advanced 2.5 Gig $149.95 (new) · Ultimate 8 Gig $249.95 (new). All
+  symmetrical, no caps, no contract, free professional installation.
+- Whole-Home WiFi: $12.95/mo single family (U6), $8.95/mo apartment (U4),
+  mesh units $4.95/mo each.
+- Digital Voice: from $25.00/mo, unlimited nationwide calling,
+  voicemail-to-email, simultaneous ring, Find Me / Follow Me, $5 port fee.
+- Bundle rows combine the published monthly rate of each component service;
+  each bundle's `promoQualifier` states the component rates explicitly.
+
+**Omitted service lines:** `cable`, `tv` and `mobile` carry zero plans because
+NextLight does not offer them natively. Their sections therefore never render.
+
+### Page order (as built)
+1. Persistent disclosure bar — "Independent Authorized Retailer of NextLight."
+2. Sticky header — wordmark, anchor nav (Plans · Why NextLight · FAQ),
+   solid call button.
+3. Hero — eyebrow, H1, subline, trust chips, speed stats; order card with the
+   price anchor, ZIP checker **and** a "Call to order" button.
+4. Fiber plans.
+5. Bundles.
+6. Digital Voice home phone.
+7. Fine-print grid — full comparison table + hardware/one-time costs.
+8. How It Works, then Why NextLight, with a mid-page conversion band.
+9. FAQ — native `<details>` accordion, works before hydration.
+10. Footer — four columns, legal rail, retailer disclosure.
+
+### Compliance constraints enforced
+- No copy routing users to the carrier for billing, outages or support.
+- Hero keeps both the ZIP checker and the call button.
+- Card and section CTAs read "Call to order" / "Call for pricing" only. Raw
+  phone numbers appear solely in the header and footer.
+- No competitor comparisons and no self-deprecating retailer copy.
+- No sections for services NextLight does not offer; no placeholder cards.
+- No Broadband Facts label links anywhere.
+- No "pricing observed [date]" strings anywhere.
+- No "is this the official site?" FAQ and no reseller-structure Q&A.
+- Retailer disclosure appears in the top bar, the fine-print section and the
+  footer legal rail.
+
+### Layout safety
+- `html, body { max-width: 100%; overflow-x: hidden }` plus a global
+  `* { min-width: 0 }` so flex and grid children can shrink.
+- The fine-print table is the only wide element; it scrolls inside its own
+  `.scroll-x` container rather than pushing the page.
+
+### Verification results
+Measured against the running app, not assumed:
+- **320px overflow:** `scrollWidth === clientWidth === 320` at three scroll
+  depths, with zero elements extending past the viewport (the fine-print
+  table's own `.scroll-x` scroller excluded by design).
+- **Call tracking:** 12 `tel:` anchors on the page, all 12 carrying
+  `data-call-cta`, all resolving to the single `site.phoneTel` value.
+- **CTA labels:** the only label on a call link outside the header/footer is
+  "Call to order". No raw phone number appears in the page body.
+- **Section order:** `hero, fiber, bundles, phone, fine-print, how-it-works,
+  why, faq` — cable, tv and mobile absent as intended.
+- **Banned-phrase sweep:** date stamps, Broadband Facts links, "is this the
+  official site" FAQ, "ordering channel", "terrestrial fiber", "call to ask"
+  — all absent.
+- **Console:** clean on a fresh load, no errors or warnings.
+- **Build:** `next build` succeeds; the route is fully static (`○`).
+
+Note on a test artifact: measuring reveal state by driving `window.scrollTo`
+gives a false reading, because Lenis restores its own scroll target on the
+next frame and the page never actually moves. Verify with real wheel input.
