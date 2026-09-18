@@ -6,6 +6,69 @@ reverted. Newest entries at the top.
 
 ---
 
+## [0.8.0] — Mobile pass, repository, Vercel readiness
+
+### Audited rather than spot-checked
+Wrote a single audit routine and ran it at 320, 375, 414 and 768px, checking
+horizontal overflow, elements escaping the viewport, text under 12px, tap
+targets under 40px, and broken images.
+
+**First run at 320px: 37 issues** — 19 text elements between 10.6px and 11.2px,
+18 tap targets under 40px. No overflow and no broken images, which is what
+every previous spot-check had been measuring.
+
+| | Before | After |
+|---|---|---|
+| 320px | 37 | **0** |
+| 375px | — | **0** |
+| 414px | — | **0** |
+| 768px | — | **0** |
+
+### Text
+Sub-12px type raised to a 12px floor: the disclosure bar, hero eyebrow, stat
+ribbon labels, plan-card Download/Upload labels and card badges. Tracking was
+pulled in slightly where the larger size would otherwise have widened a label
+past its space.
+
+### Tap targets
+`CallButton` now carries `min-h-11` (44px) on every size — the header call
+button was 36px, and it is the most important control on the page. Nav links,
+the mobile anchor rail, the logo lockup, footer links and the footer phone
+number all reach 44px. Footer list gaps came down to compensate, since the
+min-height now supplies the rhythm.
+
+### Images on phones
+The hero backdrop is hidden below `md` (a 16:9 frame in a tall narrow hero
+upscales 1.7x and keeps ~13% of its width). That left phones with **no hero
+imagery at all**, which is backwards for a page whose traffic is mostly
+mobile. Added a mobile-only band between the copy and the ribbon showing the
+photograph at its own 16:10 aspect — uncropped and sharp, rather than a
+severe centre crop. Page now carries 6 images at 320px, none broken.
+
+### Animation cost on phones
+The colour fields were the one real performance risk: eight of them, three
+blurred layers each. Below `sm` the blur radius drops to 16px and the third
+blob is dropped entirely. Everything still animates transform/opacity only.
+
+### Repository
+Pushed to `github.com/PavithraEbbali/nextlight` on `main`. The remote existed
+and was empty, so nothing was overwritten — verified with `git ls-remote`
+before pushing rather than assuming.
+
+Also removed five unreferenced scaffold assets create-next-app left in
+`public/` (`file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg`);
+grep confirmed nothing in `app/`, `components/` or `lib/` referenced them.
+`/.claude` added to `.gitignore` as local tooling.
+
+### Vercel
+Nothing to configure — Vercel auto-detects Next.js, and the project has no
+environment variables, no custom build command and no output-directory
+override. README carries the settings table and the two pre-launch items:
+the placeholder phone number, and the four footer legal links still pointing
+at `#`.
+
+---
+
 ## [0.7.1] — Ribbon sits lower in the hero
 
 Padding on the ribbon's container reweighted so the spare vertical space goes
