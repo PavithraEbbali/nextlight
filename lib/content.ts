@@ -111,6 +111,12 @@ export const site = {
    */
   contactEmail: 'compliance@example.com',
 
+  /**
+   * PLACEHOLDER registered address, shown in the footer contact column and in
+   * the compliance line. Replace with the retailer's real mailing address.
+   */
+  mailingAddress: '000 Example Street, Longmont, CO 80501',
+
   disclosureShort: 'Independent Authorized Retailer of NextLight.',
   disclosureLong:
     'This is an independent authorized retailer of NextLight services. Pricing, speeds and service features are set by the provider and are subject to change.',
@@ -709,13 +715,35 @@ export const footer = {
     },
   ],
   contactHeading: 'Talk to a human',
+
+  /*
+    Required-disclosures block.
+
+    Every rate quoted below is derived from the rate card rather than typed
+    out, so the small print cannot contradict the plan cards - which is the
+    usual way a disclosures block goes stale.
+  */
+  disclosuresHeading: 'Offer details & required disclosures',
+  disclosures: [
+    `PRICING: Monthly rates shown on this site are the provider’s published residential rates and exclude taxes, government fees and surcharges. Rates are set by the provider, not by us, and are subject to change at any time. The rate confirmed to you when your order is placed is the rate that applies.`,
+    `SPEEDS: Advertised speeds are the maximum for each plan. Actual speeds vary with your equipment, in-home wiring, the number of connected devices and network conditions, and are not guaranteed. Speeds over WiFi are typically lower than over a wired connection.`,
+    `AVAILABILITY: Service is address-specific. A ZIP code falling within the service area does not guarantee that service can be delivered to a particular address. Availability is confirmed at the point of order.`,
+    `INSTALLATION: Standard professional installation is included on residential internet plans. Work beyond a standard installation may carry additional cost, which the technician will explain before proceeding. Someone aged 18 or over must be present.`,
+    `MULTI-GIG PLANS: The Advanced 2.5 Gig and Ultimate 8 Gig tiers require multi-gig capable equipment to reach their full speed. Equipment that is not multi-gig capable will limit throughput regardless of the plan ordered.`,
+    `WHOLE-HOME WIFI: Managed WiFi is an optional add-on at ${monthly(rates.wifiSingleFamily)} for a single-family home and ${monthly(rates.wifiApartment)} for an apartment, with optional mesh units at ${monthly(rates.wifiMeshExtender)} each. Coverage varies with the size, layout and construction of the property. You may use your own router instead at no monthly charge.`,
+    `DIGITAL VOICE: Home phone service starts at ${monthly(rates.digitalVoice)} plus applicable taxes and a one-time ${money(rates.numberPorting)} number-porting fee. 911 service is tied to the registered service address and depends on power and your internet connection being available.`,
+    `BUNDLES: Bundle rates shown combine the published monthly rate of each included service. They are not a discounted package rate, and each component is billed at its own published rate.`,
+    `DATA AND TERMS: Residential plans carry no monthly data allowance and no annual term agreement. Service is month to month. Terms are set by the provider and may change.`,
+    `BILLING: Service is billed by the provider on its own cycle, under its own terms, and includes taxes and fees that are not part of the advertised monthly rate. We do not bill you and do not take payment for monthly service.`,
+    `TRADEMARKS: ${site.brandName} and related marks are trademarks of their respective owner and are used here to identify the services we are authorized to sell. Their use does not imply that their owner has reviewed or endorsed this site.`,
+  ],
+
   /*
     Legal links are derived from `legalDocs` in lib/legal.ts rather than
     listed here, so adding a policy adds its footer link automatically and the
-    two can never disagree. See `footerLegalLinks()` below.
+    two can never disagree. See `footerLegalLinks()` there.
   */
   copyright:
-    '© NextLight Authorized Retailer - independent authorized retailer.',
-  trademark:
-    'NEXTLIGHT and related marks are trademarks of their respective owner. This site is operated by an independent authorized retailer.',
+    '© NextLight Authorized Retailer — independent authorized retailer. Not the network operator.',
+  compliance: `For compliance enquiries or complaints, contact us on ${site.phoneDisplay} or at ${site.contactEmail}. ${site.mailingAddress}`,
 } as const;

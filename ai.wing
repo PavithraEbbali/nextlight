@@ -6,6 +6,62 @@ reverted. Newest entries at the top.
 
 ---
 
+## [0.9.1] — Footer rebuilt to the reference pattern
+
+Inspected bestfiberinternet.us's footer in the DOM rather than working from a
+description. Its structure is three blocks stacked on **one** dark surface,
+separated by hairline rules rather than by colour:
+
+```
+footer                        bg rgb(0,18,38)
+  __top          grid, 4 cols (254 / 182 / 182 / 218), gap 36px
+                 brand blurb | SHOP | LEARN | TALK TO A HUMAN
+  __disclaimers  border-top, "Offer details & required disclosures"
+                 + 11 small-print paragraphs
+  __bottom       border-top, policy links, then 2 copyright/compliance lines
+```
+
+### What ours was missing
+The **disclosures block**. Ours carried two short lines; the reference carries
+a titled block of eleven paragraphs covering pricing, speeds, availability,
+equipment and billing. For a retailer footer that block is the substance, and
+it was the main structural gap.
+
+Also removed: the bright sprout bar that used to close the page. It came from
+the brand site, and it cut the footer in two exactly where the reference keeps
+one continuous surface.
+
+### Disclosures are derived, not typed
+Every rate quoted in the small print comes from the rate card via
+`money()` / `monthly()` rather than being written out. A disclosures block that
+contradicts the plan cards is the normal failure mode here, and deriving the
+figures makes that impossible.
+
+Eleven paragraphs: pricing, speeds, availability, installation, multi-gig
+equipment, Whole-Home WiFi, Digital Voice, bundles, data and terms, billing,
+trademarks.
+
+### Kept on our palette, and kept to the constraints
+Colours stay NextLight rather than copying the reference's blue-greys:
+navy-dark ground, ivory at graded opacities, sprout column headings.
+
+Two things in the reference were deliberately not copied:
+- Its `Pricing current as of <date> · Last reviewed: <date>` line, which the
+  standing no-date-stamps rule rules out.
+- Its structure otherwise, which was followed closely.
+
+`site.mailingAddress` added as a clearly-marked placeholder, shown in the
+contact column and the compliance line.
+
+### Verified
+Footer renders 4 columns at 1265px (323 / 239 / 239 / 275, against the
+reference's 254 / 182 / 182 / 218) and collapses to one at 320px. 11
+disclosure paragraphs, 8 policy links, sprout bar gone, `tel:` still carries
+`data-call-cta`, no year in the copyright. Home page audits **0 issues** at
+320px. `tsc --noEmit` clean, `next build` clean.
+
+---
+
 ## [0.9.0] — Eight policy pages
 
 Per the project's AGENTS.md, the bundled Next docs were read before writing
